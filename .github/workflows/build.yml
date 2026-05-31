@@ -1,24 +1,31 @@
 name: Build and Deploy
+
 on:
   push:
     branches: [main]
+
 permissions:
   contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Extract zip
         run: unzip halallearn_fixed.zip -d extracted
+
       - name: Install dependencies
-        run: cd extracted/project && npm install
+        run: cd extracted/newproject && npm install
+
       - name: Build
-        run: cd extracted/project && npm run build
+        run: cd extracted/newproject && npm run build
+
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v2.0
         with:
-          publish-dir: extracted/project/dist
+          publish-dir: extracted/newproject/dist
           production-branch: main
           production-deploy: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
