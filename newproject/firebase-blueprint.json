@@ -1,0 +1,176 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with balance and activity metrics",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "nickname": { "type": "string" },
+        "coins": { "type": "number" },
+        "banned": { "type": "boolean" },
+        "createdAt": { "type": "number" },
+        "referredBy": { "type": "string" },
+        "totalReferrals": { "type": "number" },
+        "referralCoins": { "type": "number" },
+        "weeklyCoins": { "type": "number" },
+        "monthlyCoins": { "type": "number" },
+        "totalEarnings": { "type": "number" },
+        "dailyAds": { "type": "number" },
+        "adsDate": { "type": "string" },
+        "dailyQuizzes": { "type": "number" },
+        "totalQuizzes": { "type": "number" },
+        "quizDate": { "type": "string" },
+        "factDate": { "type": "string" },
+        "weeklyDate": { "type": "string" },
+        "monthlyDate": { "type": "string" },
+        "lastBonusDate": { "type": "string" },
+        "referralCode": { "type": "string" },
+        "perfectStreak": { "type": "number" },
+        "badges": { "type": "array", "items": { "type": "string" } },
+        "inventory": { "type": "array", "items": { "type": "string" } },
+        "equippedFrame": { "type": "string", "nullable": true },
+        "theme": { "type": "string" },
+        "fcmToken": { "type": "string" },
+        "pushEnabled": { "type": "boolean" },
+        "notifyDailyBonus": { "type": "boolean" },
+        "notifyNewOffers": { "type": "boolean" },
+        "notifyReferrals": { "type": "boolean" }
+      },
+      "required": ["uid", "name", "email", "coins", "banned", "createdAt"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Record of coin earnings or spendings",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["bonus", "ad", "quiz", "referral", "withdraw", "purchase", "duel_bet", "duel_win"] },
+        "amount": { "type": "number" },
+        "note": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["type", "amount", "note", "createdAt"]
+    },
+    "ReferralRecord": {
+      "title": "ReferralRecord",
+      "description": "Record of a successful referral",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "reward": { "type": "number" },
+        "referrerId": { "type": "string" },
+        "referrerName": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "name", "reward", "referrerId", "createdAt"]
+    },
+    "WithdrawRequest": {
+      "title": "WithdrawRequest",
+      "description": "Redemption request for real rewards",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "type": { "type": "string", "enum": ["upi", "google_play", "amazon"] },
+        "amount": { "type": "number" },
+        "detail": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "completed", "rejected"] },
+        "code": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "name", "email", "type", "amount", "detail", "status", "createdAt"]
+    },
+    "Duel": {
+      "title": "Duel",
+      "description": "Real-time 1v1 multi-question math duel",
+      "type": "object",
+      "properties": {
+        "players": { "type": "array", "items": { "type": "string" } },
+        "playerData": { "type": "object" },
+        "wager": { "type": "number" },
+        "prize": { "type": "number" },
+        "status": { "type": "string", "enum": ["waiting", "starting", "active", "finished", "expired"] },
+        "questions": { "type": "array", "items": { "type": "object" } },
+        "results": { "type": "object" },
+        "winner": { "type": "string" },
+        "claimed": { "type": "boolean" },
+        "startTime": { "type": "number" },
+        "createdAt": { "type": "number" },
+        "endedAt": { "type": "number" }
+      },
+      "required": ["players", "wager", "prize", "status", "createdAt"]
+    },
+    "Activity": {
+      "title": "Activity",
+      "description": "Real-time global activity feed item",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "type": { "type": "string", "enum": ["redeem", "level_up", "achievement", "referral"] },
+        "message": { "type": "string" },
+        "value": { "type": "number" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["userId", "userName", "type", "message", "createdAt"]
+    },
+    "Quiz": {
+      "title": "Quiz",
+      "description": "Custom quiz questions added by admin",
+      "type": "object",
+      "properties": {
+        "question": { "type": "string" },
+        "optionA": { "type": "string" },
+        "optionB": { "type": "string" },
+        "optionC": { "type": "string" },
+        "optionD": { "type": "string" },
+        "correctAnswer": { "type": "string", "enum": ["A", "B", "C", "D"] },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["question", "optionA", "optionB", "optionC", "optionD", "correctAnswer", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/quizzes/{quizId}": {
+      "schema": "Quiz",
+      "description": "Custom trivia quizzes populated by admin"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Individual user documents"
+    },
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "User-specific transactions"
+    },
+    "/users/{userId}/referrals/{referralId}": {
+      "schema": "ReferralRecord",
+      "description": "User-specific referral history"
+    },
+    "/users/{userId}/withdrawals/{withdrawalId}": {
+      "schema": "WithdrawRequest",
+      "description": "User-specific withdrawal history"
+    },
+    "/withdrawals/{withdrawalId}": {
+      "schema": "WithdrawRequest",
+      "description": "Global collection for admin to manage all withdrawals"
+    },
+    "/duels/{duelId}": {
+      "schema": "Duel",
+      "description": "Active and past 1v1 duels"
+    },
+    "/referrals/{referralId}": {
+      "schema": "ReferralRecord",
+      "description": "Global collection for tracking all referrals across the platform"
+    },
+    "/activities/{activityId}": {
+      "schema": "Activity",
+      "description": "Global activity feed for all users"
+    }
+  }
+}
