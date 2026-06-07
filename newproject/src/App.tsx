@@ -756,12 +756,34 @@ export default function App() {
   const loginWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
       provider.setCustomParameters({ prompt: 'select_account' });
-      const { signInWithRedirect } = await import('firebase/auth');
-      await signInWithRedirect(auth, provider);
+      
+      // Try popup first
+      try {
+        const result = await signInWithPopup(auth, provider);
+        if (result.user) {
+          toast.success('Logged in successfully!');
+        }
+      } catch (popupError: any) {
+        // If popup fails, use redirect
+        if (popupError.code === 'auth/popup-blocked' || 
+            popupError.code === 'auth/popup-closed-by-user' ||
+            popupError.code === 'auth/cancelled-popup-request') {
+          const { signInWithRedirect } = await import('firebase/auth');
+          await signInWithRedirect(auth, provider);
+        } else {
+          throw popupError;
+        }
+      }
     } catch (error: any) {
-      console.error(error);
-      toast.error(`Login failed: ${error.message || 'Please try again.'}`);
+      console.error('Login error:', error.code, error.message);
+      if (error.code === 'auth/unauthorized-domain') {
+        toast.error('Domain not authorized. Contact support.');
+      } else if (error.code !== 'auth/popup-closed-by-user') {
+        toast.error(`Login failed: ${error.message || 'Please try again.'}`);
+      }
     }
   };
 
