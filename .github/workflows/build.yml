@@ -14,7 +14,16 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Extract zip
-        run: unzip halallearn_fixed.zip -d newproject && mv newproject/newproject/* newproject/ 2>/dev/null || true
+        run: |
+          unzip -o halallearn_fixed.zip -d extracted
+          ls extracted/
+
+      - name: Find and copy project files
+        run: |
+          PROJECT_DIR=$(find extracted -name "package.json" -not -path "*/node_modules/*" | head -1 | xargs dirname)
+          echo "Project found at: $PROJECT_DIR"
+          cp -r $PROJECT_DIR/. newproject/
+          ls newproject/
 
       - name: Commit extracted files
         run: |
