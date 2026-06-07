@@ -18,17 +18,22 @@ jobs:
           unzip -o halallearn_fixed.zip -d extracted
           ls extracted/
 
-      - name: Find and copy project files
+      - name: Find project
         run: |
           PROJECT_DIR=$(find extracted -name "package.json" -not -path "*/node_modules/*" | head -1 | xargs dirname)
-          echo "Project found at: $PROJECT_DIR"
-          cp -r $PROJECT_DIR/. newproject/
-          ls newproject/
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
 
-      - name: Commit extracted files
+      - name: Install dependencies
+        run: cd $PROJECT_DIR && npm install
+
+      - name: Build
         run: |
-          git config user.email "action@github.com"
-          git config user.name "GitHub Action"
-          git add newproject/
-          git commit -m "Extract project files" || echo "Nothing to commit"
-          git push
+          cd $PROJECT_DIR
+          echo "VITE_BASE_URL=/Halalra/" >> .env
+          npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ env.PROJECT_DIR }}/dist
