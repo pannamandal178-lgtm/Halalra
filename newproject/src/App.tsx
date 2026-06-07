@@ -757,26 +757,11 @@ export default function App() {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      const result = await signInWithPopup(auth, provider);
-      if (result.user) {
-        toast.success('Logged in successfully!');
-      }
+      const { signInWithRedirect } = await import('firebase/auth');
+      await signInWithRedirect(auth, provider);
     } catch (error: any) {
       console.error(error);
-      if (error.code === 'auth/popup-blocked') {
-        // Fall back to redirect if popup is blocked
-        try {
-          const { signInWithRedirect } = await import('firebase/auth');
-          const provider = new GoogleAuthProvider();
-          await signInWithRedirect(auth, provider);
-        } catch (redirectError) {
-          toast.error('Login failed. Please allow popups and try again.');
-        }
-      } else if (error.code === 'auth/unauthorized-domain') {
-        toast.error('This domain is not authorized. Please check Firebase console.');
-      } else if (error.code !== 'auth/popup-closed-by-user') {
-        toast.error(`Login failed: ${error.message || 'Please try again.'}`);
-      }
+      toast.error(`Login failed: ${error.message || 'Please try again.'}`);
     }
   };
 
