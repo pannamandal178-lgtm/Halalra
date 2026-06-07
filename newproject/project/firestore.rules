@@ -1,0 +1,142 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Utility functions
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isAdmin() { 
+      return isSignedIn() && 
+             request.auth.token.email == 'pannamandal178@gmail.com';
+    }
+    function isValidId(id) { return id is string && id.size() <= 128; }
+    
+    // Allow public read of devices for the hardware limit check
+    match /devices/{deviceId} {
+      allow read: if true;
+      allow create, update: if isSignedIn();
+    }
+
+    match /users/{userId} {
+      // Allow public read of profiles (needed for referrals and leaderboard)
+      allow read: if true;
+      
+      allow create: if isSignedIn() && request.auth.uid == userId && (
+        !request.resource.data.keys().hasAny(['referredBy']) || (
+          isValidId(request.resource.data.referredBy) &&
+          request.resource.data.referredBy != userId &&
+          exists(/databases/$(database)/documents/users/$(request.resource.data.referredBy)) &&
+          request.resource.data.coins >= 0
+        )
+      );
+
+      allow update: if isAdmin() || (isSignedIn() && (
+        // Action: Self Update & Activities
+        (isOwner(userId) && 
+          request.resource.data.diff(resource.data).affectedKeys().hasAny(['name', 'photoURL', 'nickname', 'pushEnabled', 'fcmToken', 'theme', 'notifyDailyBonus', 'notifyNewOffers', 'notifyReferrals', 'isEditingProfile', 'coins', 'totalEarnings', 'weeklyCoins', 'monthlyCoins', 'dailyAds', 'adsDate', 'dailyQuizzes', 'quizDate', 'lastBonusDate', 'factDate', 'weeklyDate', 'monthlyDate', 'perfectStreak', 'totalQuizzes', 'badges', 'inventory', 'equippedFrame', 'referralCode', 'strikes', 'banned', 'banReason']) &&
+          (!request.resource.data.keys().hasAny(['coins']) || request.resource.data.coins <= resource.data.coins + 1000)
+        ) ||
+        // Action: Redeem Referral (Referee role)
+        (isOwner(userId) && 
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coins', 'totalEarnings', 'weeklyCoins', 'monthlyCoins', 'referredBy']) &&
+          !resource.data.keys().hasAny(['referredBy']) &&
+          isValidId(request.resource.data.referredBy) &&
+          request.resource.data.referredBy != userId &&
+          exists(/databases/$(database)/documents/users/$(request.resource.data.referredBy))
+        ) ||
+        // Action: Referral Awarding (By referee on referrer profile)
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coins', 'totalEarnings', 'weeklyCoins', 'monthlyCoins', 'totalReferrals', 'referralCoins']) &&
+          request.resource.data.totalReferrals == resource.data.totalReferrals + 1 &&
+          getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.referredBy == resource.data.referralCode
+        )
+      ));
+
+      match /transactions/{txId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) || (
+          isSignedIn() && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.referredBy == get(/databases/$(database)/documents/users/$(userId)).data.referralCode
+        );
+      }
+
+      match /withdrawals/{wId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && request.resource.data.status == 'pending';
+      }
+
+      match /referrals/{refId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isSignedIn() && (isOwner(userId) || (
+          getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.referredBy == get(/databases/$(database)/documents/users/$(userId)).data.referralCode &&
+          refId == request.auth.uid
+        ));
+      }
+    }
+
+    match /withdrawals/{wId} {
+      allow read: if isAdmin();
+      allow update, delete: if isAdmin();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'pending';
+    }
+
+    match /appConfig/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /duels/{duelId} {
+      allow read: if isSignedIn() && (
+        resource.data.status == 'waiting' || 
+        request.auth.uid in resource.data.players
+      );
+      
+      allow create: if isSignedIn() && 
+        request.resource.data.players == [request.auth.uid] &&
+        request.resource.data.status == 'waiting' &&
+        request.resource.data.wager == 50;
+
+      allow update: if isSignedIn() && (
+        // Action: Join Duel
+        (resource.data.status == 'waiting' && 
+         request.resource.data.status == 'starting' &&
+         request.resource.data.players.size() == 2 &&
+         request.auth.uid in request.resource.data.players
+        ) ||
+        // Action: Set Questions (Player 1)
+        (resource.data.status == 'starting' && 
+         request.auth.uid == resource.data.players[0] &&
+         request.resource.data.status == 'active' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['questions', 'status', 'startTime'])
+        ) ||
+        // Action: Submit Results
+        (resource.data.status in ['active', 'starting'] && 
+         request.auth.uid in resource.data.players &&
+         request.resource.data.diff(resource.data).affectedKeys().hasAny(['results', 'status', 'winner', 'endedAt'])
+        )
+      );
+    }
+
+    match /activities/{actId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete, update: if isAdmin();
+    }
+
+    match /referrals/{refId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn() && (
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.referrerId != null
+      );
+    }
+
+    match /quizzes/{quizId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Default Deny (Catch-all)
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

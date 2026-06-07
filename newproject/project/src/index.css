@@ -1,0 +1,105 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --color-accent: #00ff88;
+  --color-accent-subtle: rgba(0, 255, 136, 0.1);
+  --color-background: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-text-primary: var(--text);
+  --color-text-muted: var(--text-muted);
+}
+
+:root {
+  --bg: #05050f;
+  --surface: rgba(255, 255, 255, 0.03);
+  --border: rgba(255, 255, 255, 0.05);
+  --text: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --accent: #00ff88;
+}
+
+:root.light {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --accent: #059669;
+}
+
+:root {
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #000;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+:root.light body {
+  background-color: #e2e8f0;
+}
+
+#root {
+  width: 100%;
+  max-width: 430px;
+  background-color: var(--bg);
+  position: relative;
+  min-height: 100vh;
+  box-shadow: 0 0 100px rgba(0, 0, 0, 0.5);
+  overflow-x: hidden;
+}
+
+.glass-card {
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(0, 255, 136, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.glow-accent {
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+}
+
+.text-gradient {
+  background: linear-gradient(to right, #ffffff, #00ff88);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
