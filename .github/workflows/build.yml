@@ -1,37 +1,22 @@
 name: Build and Deploy
-
 on:
   push:
     branches: [main]
-
 permissions:
   contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
       - name: Extract zip
-        run: |
-          unzip -o halallearn_fixed.zip -d extracted
-          ls extracted/
-
+        run: unzip -o halallearn_fixed.zip -d extracted
       - name: Find project
         run: |
           PROJECT_DIR=$(find extracted -name "package.json" -not -path "*/node_modules/*" | head -1 | xargs dirname)
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-
-      - name: Install dependencies
-        run: cd $PROJECT_DIR && npm install
-
-      - name: Build
-        run: |
-          cd $PROJECT_DIR
-          echo "VITE_BASE_URL=/Halalra/" >> .env
-          npm run build
-
+      - name: Install and Build
+        run: cd $PROJECT_DIR && npm install && npm run build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
