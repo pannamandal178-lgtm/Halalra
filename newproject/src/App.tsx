@@ -756,24 +756,25 @@ export default function App() {
   const loginWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      // On mobile, popups are often blocked or behave poorly.
-      // Redirect is usually better for mobile.
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      
-      if (isMobile) {
-        const { signInWithRedirect } = await import('firebase/auth');
-        await signInWithRedirect(auth, provider);
-      } else {
-        await signInWithPopup(auth, provider);
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, provider);
+      if (result.user) {
         toast.success('Logged in successfully!');
       }
     } catch (error: any) {
       console.error(error);
       if (error.code === 'auth/popup-blocked') {
-        toast.error('Login popup was blocked by your browser. Please allow popups or try again.');
+        // Fall back to redirect if popup is blocked
+        try {
+          const { signInWithRedirect } = await import('firebase/auth');
+          const provider = new GoogleAuthProvider();
+          await signInWithRedirect(auth, provider);
+        } catch (redirectError) {
+          toast.error('Login failed. Please allow popups and try again.');
+        }
       } else if (error.code === 'auth/unauthorized-domain') {
-        toast.error('This domain is not authorized for login. Please check Firebase console.');
-      } else {
+        toast.error('This domain is not authorized. Please check Firebase console.');
+      } else if (error.code !== 'auth/popup-closed-by-user') {
         toast.error(`Login failed: ${error.message || 'Please try again.'}`);
       }
     }
@@ -2724,7 +2725,6 @@ function MathQuizScreen({ userData, onBack, appConfig }: { userData: UserData; o
       setShowFeedbackOverlay('correct');
       setLoading(true);
 
-      if (userData.email === 'pannamandal178@gmail.com') { setLoading(false); return; }
       try {
         const today = getTodayDateString();
         const userRef = doc(db, 'users', userData.uid);
@@ -2842,7 +2842,6 @@ function MathQuizScreen({ userData, onBack, appConfig }: { userData: UserData; o
       try {
         const today = getTodayDateString();
         const userRef = doc(db, 'users', userData.uid);
-      if (userData.email === 'pannamandal178@gmail.com') { setLoading(false); return; }
         
         const batch = writeBatch(db);
         
@@ -3564,17 +3563,13 @@ function HomeScreen({ userData, setShowWithdraw, onOpenTab, appConfig }: { userD
   }, [adCooldown]);
 
   const handleDailyBonus = async () => {
-    if (userData.email === 'pannamandal178@gmail.com') {
-      toast.error('Admin cannot earn coins!');
-      return;
-    }
+    if (userData.email === 'pannamandal178@gmail.com') { toast.error("Admin cannot earn!"); return; }
     const today = getTodayDateString();
     if (userData.lastBonusDate === today) {
       toast.error('Already claimed today!');
       return;
     }
-    setPendingAction(() => async () => {
-      setClaimingBonus(true);
+    setClaimingBonus(true);
     await new Promise(r => setTimeout(r, 2000));
     
     try {
@@ -3607,15 +3602,9 @@ function HomeScreen({ userData, setShowWithdraw, onOpenTab, appConfig }: { userD
     } finally {
       setClaimingBonus(false);
     }
-    });
-    setShowAdOverlay(true);
   };
 
   const handleWatchAd = async () => {
-    if (userData.email === 'pannamandal178@gmail.com') {
-      toast.error('Admin cannot earn coins!');
-      return;
-    }
     const today = getTodayDateString();
     let adsCount = userData.adsDate === today ? (userData.dailyAds || 0) : 0;
 
@@ -3739,12 +3728,6 @@ function HomeScreen({ userData, setShowWithdraw, onOpenTab, appConfig }: { userD
       animate="show"
       className="p-6 space-y-6"
     >
-      {showAdOverlay && (
-        <AdOverlay onFinish={() => {
-          setShowAdOverlay(false);
-          if (pendingAction) { pendingAction(); setPendingAction(null); }
-        }} />
-      )}
       <motion.header variants={item} className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -3891,10 +3874,7 @@ function HomeScreen({ userData, setShowWithdraw, onOpenTab, appConfig }: { userD
         {/* Quiz Card */}
         <motion.div 
           variants={item}
-          onClick={() => {
-            setPendingAction(() => () => onOpenTab('quiz'));
-            setShowAdOverlay(true);
-          }}
+          onClick={() => onOpenTab('quiz')}
           className="glass-card p-5 space-y-4 group cursor-pointer active:scale-[0.98] transition-all border-l-4 border-l-purple-500/50"
         >
           <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-all">
