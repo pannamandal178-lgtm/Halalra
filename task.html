@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Task & Earn</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; background-color: #0a0a0a; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .task-container { max-width: 450px; width: 100%; background: #1a1a2e; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,255,136,0.1); text-align: center; margin-top: 20px; }
+        h2 { color: #00ff88; font-size: 22px; margin-bottom: 10px; }
+        p { color: #aaa; font-size: 14px; margin-bottom: 15px; line-height: 1.6; }
+        .how-to { background: #111; border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: left; }
+        .how-to p { margin-bottom: 8px; color: #ccc; font-size: 13px; }
+        .how-to .warning { color: #ff6b6b; font-size: 12px; margin-top: 10px; }
+        .ad-box { margin: 20px auto; padding: 10px; background: #111; border: 1px dashed #333; display: inline-block; border-radius: 8px; cursor: pointer; }
+        .ad-label { color: #666; font-size: 12px; margin-bottom: 8px; }
+        .timer-btn { display: block; width: 100%; background-color: #333; color: #666; padding: 16px; font-size: 16px; font-weight: bold; border: none; border-radius: 10px; cursor: not-allowed; margin-top: 15px; transition: all 0.3s; }
+        .timer-btn.active { background: linear-gradient(135deg, #00ff88, #00cc66); color: #000; cursor: pointer; }
+        .success-box { display: none; background-color: #0d2818; border: 2px solid #00ff88; color: #00ff88; padding: 15px; border-radius: 10px; font-weight: bold; margin-top: 15px; }
+        .user-id { color: #555; font-size: 11px; margin-top: 10px; }
+        .progress-bar { width: 100%; background: #222; border-radius: 10px; height: 6px; margin-top: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #00ff88; border-radius: 10px; transition: width 1s linear; width: 0%; }
+    </style>
+</head>
+<body>
+    <div class="task-container">
+        <h2>🎯 Complete Task & Earn 50 Coins</h2>
+        
+        <div class="how-to">
+            <p>1️⃣ Click the banner below to start</p>
+            <p>2️⃣ Wait <strong style="color:#00ff88">60 seconds</strong> on this page</p>
+            <p>3️⃣ Click <strong style="color:#00ff88">"Claim Points"</strong> button</p>
+            <p>4️⃣ Go back to the app to verify</p>
+            <p class="warning">⚠️ Do NOT refresh or leave this page before 60 seconds!</p>
+        </div>
+
+        <div class="ad-label">👇 Click the banner to start the timer</div>
+        <div class="ad-box" id="targetAdBox">
+            <ins style="width:300px;height:250px;display:block" 
+                 data-width="300" 
+                 data-height="250" 
+                 class="d0bfdbeeee8" 
+                 data-domain="//data527.click" 
+                 data-affquery="/a17b5381a63c1fe738bf/0bfdbeeee8/?placementName=default">
+                <script src="//data527.click/js/responsive.js" async></script>
+            </ins>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <button id="actionBtn" class="timer-btn" disabled>Click the banner to start</button>
+        
+        <div id="successMessage" class="success-box">
+            ✅ Task complete! Go back to the app and click "Verify" to get your 50 coins!
+        </div>
+
+        <p class="user-id" id="userIdDisplay"></p>
+    </div>
+
+    <script>
+        const googleScriptURL = "https://script.google.com/macros/s/AKfycbxgxx8eRp1OLjp5xM3nNNSCbO7Wc6kiCrSKrxOVfcEUJZtjfR9pMVm-Fshod6qwwOorRQ/exec";
+        const TIMER_SECONDS = 60;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const subid = urlParams.get('subid') || '';
+
+        const adBox = document.getElementById('targetAdBox');
+        const actionBtn = document.getElementById('actionBtn');
+        const successMessage = document.getElementById('successMessage');
+        const progressFill = document.getElementById('progressFill');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+
+        if (subid) {
+            userIdDisplay.textContent = `User ID: ${subid.slice(0,8)}...`;
+        }
+
+        let timeLeft = TIMER_SECONDS;
+        let timerId = null;
+        let isClicked = false;
+
+        adBox.addEventListener('click', function() {
+            if (!subid) {
+                alert("Error: User ID missing! Please open from the app.");
+                return;
+            }
+            if (!isClicked) {
+                isClicked = true;
+                actionBtn.innerText = `Please wait (${timeLeft}s)...`;
+                
+                timerId = setInterval(() => {
+                    timeLeft--;
+                    const progress = ((TIMER_SECONDS - timeLeft) / TIMER_SECONDS) * 100;
+                    progressFill.style.width = progress + '%';
+
+                    if (timeLeft > 0) {
+                        actionBtn.innerText = `Please wait (${timeLeft}s)...`;
+                    } else {
+                        clearInterval(timerId);
+                        actionBtn.innerText = "🎁 Claim Points";
+                        actionBtn.classList.add('active');
+                        actionBtn.disabled = false;
+                    }
+                }, 1000);
+            }
+        });
+
+        actionBtn.addEventListener('click', function() {
+            if (isClicked && timeLeft <= 0) {
+                actionBtn.innerText = "Verifying...";
+                actionBtn.disabled = true;
+
+                fetch(`${googleScriptURL}?subid=${subid}&status=completed`, {
+                    method: 'POST',
+                    mode: 'no-cors'
+                })
+                .then(() => {
+                    successMessage.style.display = 'block';
+                    actionBtn.style.display = 'none';
+                })
+                .catch(err => {
+                    alert("Network error! Please try again.");
+                    actionBtn.disabled = false;
+                    actionBtn.innerText = "🎁 Claim Points";
+                });
+            }
+        });
+    </script>
+</body>
+</html>
