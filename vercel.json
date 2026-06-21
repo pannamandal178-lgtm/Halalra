@@ -1,0 +1,5 @@
+{
+  "buildCommand": "unzip -o halallearn_fixed.zip -d extracted && cd extracted/project && cp vite.config.vercel.ts vite.config.ts && npm install && npm run build",
+  "outputDirectory": "extracted/project/dist",
+  "installCommand": "echo skip"
+}
