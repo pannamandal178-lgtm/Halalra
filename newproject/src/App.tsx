@@ -2510,18 +2510,6 @@ function CooldownCircle({ remaining, total }: { remaining: number; total: number
 
 function AdOverlay({ onFinish }: { onFinish: () => void }) {
   const [timeLeft, setTimeLeft] = useState(8);
-  const adRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Inject HilltopAds script directly into ad container
-    if (adRef.current) {
-      const s = document.createElement('script');
-      s.setAttribute('data-zone', '11191032');
-      s.src = 'https://nap5k.com/tag.min.js';
-      s.async = true;
-      adRef.current.appendChild(s);
-    }
-  }, []);
 
   useEffect(() => {
     if (timeLeft <= 0) { onFinish(); return; }
@@ -2537,20 +2525,22 @@ function AdOverlay({ onFinish }: { onFinish: () => void }) {
       alignItems: 'center', justifyContent: 'center',
       gap: '16px', padding: '20px'
     }}>
-      {/* Timer */}
-      <div style={{ position: 'absolute', top: 16, right: 16 }}>
-        <div style={{
-          width: 50, height: 50, borderRadius: '50%',
-          background: 'linear-gradient(135deg, #00ff88, #00cc66)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 20, fontWeight: 'bold', color: '#000'
-        }}>{timeLeft}</div>
-      </div>
+      {/* Timer top right */}
+      <div style={{ position: 'absolute', top: 16, right: 16,
+        width: 50, height: 50, borderRadius: '50%',
+        background: 'linear-gradient(135deg, #00ff88, #00cc66)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 20, fontWeight: 'bold', color: '#000'
+      }}>{timeLeft}</div>
 
-      <p style={{ color: '#aaa', fontSize: 12 }}>Please wait for your reward...</p>
+      <p style={{ color: '#aaa', fontSize: 12, marginBottom: 8 }}>Your reward is loading...</p>
 
-      {/* Ad Container */}
-      <div ref={adRef} style={{ minWidth: 300, minHeight: 250 }} />
+      {/* Ad iframe */}
+      <iframe
+        src={`https://pannamandal178-lgtm.github.io/Halalra/ad.html?t=${Date.now()}`}
+        style={{ width: 320, height: 250, border: 'none', borderRadius: 12, background: '#111' }}
+        sandbox="allow-scripts allow-same-origin allow-popups"
+      />
 
       <p style={{ color: '#555', fontSize: 10 }}>Closing in {timeLeft}s</p>
     </div>
