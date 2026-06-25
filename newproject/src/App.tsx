@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { auth, db, messaging } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User, getRedirectResult } from 'firebase/auth';
 import { 
@@ -2510,12 +2510,17 @@ function CooldownCircle({ remaining, total }: { remaining: number; total: number
 
 function AdOverlay({ onFinish }: { onFinish: () => void }) {
   const [timeLeft, setTimeLeft] = useState(8);
+  const adRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const script = document.createElement('script');
-    script.innerHTML = `(function(s){s.dataset.zone='11191032',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`;
-    document.body.appendChild(script);
-    return () => { try { document.body.removeChild(script); } catch(e) {} };
+    // Inject HilltopAds script directly into ad container
+    if (adRef.current) {
+      const s = document.createElement('script');
+      s.setAttribute('data-zone', '11191032');
+      s.src = 'https://nap5k.com/tag.min.js';
+      s.async = true;
+      adRef.current.appendChild(s);
+    }
   }, []);
 
   useEffect(() => {
@@ -2527,19 +2532,27 @@ function AdOverlay({ onFinish }: { onFinish: () => void }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
-      background: 'rgba(0,0,0,0.95)',
+      background: '#000',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      gap: '20px', padding: '20px'
+      gap: '16px', padding: '20px'
     }}>
-      <p style={{ color: '#aaa', fontSize: 13 }}>Please wait for your reward...</p>
-      <div style={{
-        width: 70, height: 70, borderRadius: '50%',
-        background: 'linear-gradient(135deg, #00ff88, #00cc66)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 28, fontWeight: 'bold', color: '#000'
-      }}>{timeLeft}</div>
-      <p style={{ color: '#666', fontSize: 11 }}>Closing automatically in {timeLeft}s</p>
+      {/* Timer */}
+      <div style={{ position: 'absolute', top: 16, right: 16 }}>
+        <div style={{
+          width: 50, height: 50, borderRadius: '50%',
+          background: 'linear-gradient(135deg, #00ff88, #00cc66)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 20, fontWeight: 'bold', color: '#000'
+        }}>{timeLeft}</div>
+      </div>
+
+      <p style={{ color: '#aaa', fontSize: 12 }}>Please wait for your reward...</p>
+
+      {/* Ad Container */}
+      <div ref={adRef} style={{ minWidth: 300, minHeight: 250 }} />
+
+      <p style={{ color: '#555', fontSize: 10 }}>Closing in {timeLeft}s</p>
     </div>
   );
 }
