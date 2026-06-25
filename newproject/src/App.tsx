@@ -2518,22 +2518,32 @@ function AdOverlay({ onFinish }: { onFinish: () => void }) {
   }, [timeLeft, onFinish]);
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 9999,
-      background: 'rgba(0,0,0,0.95)',
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      gap: '20px', padding: '20px'
-    }}>
-      <p style={{ color: '#aaa', fontSize: 14 }}>🎁 Your reward is loading...</p>
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'rgba(0,0,0,0.96)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        gap: '20px', padding: '20px',
+        cursor: 'pointer'
+      }}
+    >
+      <p style={{ color: '#aaa', fontSize: 14 }}>🎁 Your reward is being prepared...</p>
+
+      {/* Big countdown circle */}
       <div style={{
-        width: 80, height: 80, borderRadius: '50%',
+        width: 100, height: 100, borderRadius: '50%',
         background: 'linear-gradient(135deg, #00ff88, #00cc66)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 32, fontWeight: 'bold', color: '#000',
-        boxShadow: '0 0 30px rgba(0,255,136,0.4)'
+        fontSize: 40, fontWeight: 'bold', color: '#000',
+        boxShadow: '0 0 40px rgba(0,255,136,0.5)',
+        animation: 'pulse 1s infinite'
       }}>{timeLeft}</div>
-      <p style={{ color: '#666', fontSize: 12 }}>Please wait {timeLeft} seconds...</p>
+
+      <p style={{ color: '#666', fontSize: 12 }}>Closing automatically in {timeLeft}s</p>
+      <p style={{ color: '#444', fontSize: 10 }}>Tap anywhere to continue</p>
+
+      <style>{`@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }`}</style>
     </div>
   );
 }
