@@ -12,7 +12,7 @@ export const ANTI_CHEAT_STRIKE_LIMIT = 5;
 
 export const CPAGRIP_PUBLISHER_ID = ""; // To be filled by user
 export const CPAGRIP_OFFERWALL_ID = ""; // To be filled by user
-export const CPALEAD_ID = "3350495"; // To be filled by user
+export const CPALEAD_ID = ""; // To be filled by user
 export const CUSTOM_OFFERWALL_URL = ""; // To be filled by user
 export const MONLIX_ID = ""; // To be filled by user
 

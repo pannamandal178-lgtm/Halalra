@@ -76,7 +76,8 @@ import {
   ShoppingCart,
   ShieldCheck,
   PlusCircle,
-  Trash2
+  Trash2,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatCurrency, getTodayDateString, getWeekString, getMonthString } from './lib/utils';
@@ -756,32 +757,15 @@ export default function App() {
   const loginWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      provider.addScope('email');
-      provider.addScope('profile');
-      provider.setCustomParameters({ prompt: 'select_account' });
-      
-      // Try popup first
-      try {
-        const result = await signInWithPopup(auth, provider);
-        if (result.user) {
-          toast.success('Logged in successfully!');
-        }
-      } catch (popupError: any) {
-        // If popup fails, use redirect
-        if (popupError.code === 'auth/popup-blocked' || 
-            popupError.code === 'auth/popup-closed-by-user' ||
-            popupError.code === 'auth/cancelled-popup-request') {
-          const { signInWithRedirect } = await import('firebase/auth');
-          await signInWithRedirect(auth, provider);
-        } else {
-          throw popupError;
-        }
-      }
+      await signInWithPopup(auth, provider);
+      toast.success('Logged in successfully!');
     } catch (error: any) {
-      console.error('Login error:', error.code, error.message);
-      if (error.code === 'auth/unauthorized-domain') {
-        toast.error('Domain not authorized. Contact support.');
-      } else if (error.code !== 'auth/popup-closed-by-user') {
+      console.error(error);
+      if (error.code === 'auth/popup-blocked') {
+        toast.error('Login popup was blocked by your browser. Please allow popups or try again.');
+      } else if (error.code === 'auth/unauthorized-domain') {
+        toast.error('This domain is not authorized for login. Please check Firebase console.');
+      } else {
         toast.error(`Login failed: ${error.message || 'Please try again.'}`);
       }
     }
@@ -2524,12 +2508,50 @@ function CooldownCircle({ remaining, total }: { remaining: number; total: number
   );
 }
 
+function AdOverlay({ onFinish }: { onFinish: () => void }) {
+  const [timeLeft, setTimeLeft] = useState(8);
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.innerHTML = `(function(s){s.dataset.zone='11191032',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`;
+    document.body.appendChild(script);
+    return () => { try { document.body.removeChild(script); } catch(e) {} };
+  }, []);
+
+  useEffect(() => {
+    if (timeLeft <= 0) { onFinish(); return; }
+    const t = setTimeout(() => setTimeLeft(prev => prev - 1), 1000);
+    return () => clearTimeout(t);
+  }, [timeLeft, onFinish]);
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: 'rgba(0,0,0,0.95)',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      gap: '20px', padding: '20px'
+    }}>
+      <p style={{ color: '#aaa', fontSize: 13 }}>Please wait for your reward...</p>
+      <div style={{
+        width: 70, height: 70, borderRadius: '50%',
+        background: 'linear-gradient(135deg, #00ff88, #00cc66)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 28, fontWeight: 'bold', color: '#000'
+      }}>{timeLeft}</div>
+      <p style={{ color: '#666', fontSize: 11 }}>Closing automatically in {timeLeft}s</p>
+    </div>
+  );
+}
+
 function MathQuizScreen({ userData, onBack, appConfig }: { userData: UserData; onBack: () => void; appConfig: any }) {
   const [quizMode, setQuizMode] = useState<'select' | 'math' | 'trivia'>('select');
   const [customQuizzes, setCustomQuizzes] = useState<any[]>([]);
   const [triviaQuestion, setTriviaQuestion] = useState<{ q: string; a: string; options: { key: string; val: string }[] } | null>(null);
   const [selectedTrivia, setSelectedTrivia] = useState<string | null>(null);
   const [currentTriviaIdx, setCurrentTriviaIdx] = useState(0);
+  const [showQuizAd, setShowQuizAd] = useState(false);
+  const [pendingQuizAction, setPendingQuizAction] = useState<(() => void) | null>(null);
 
   const [question, setQuestion] = useState<{ q: string; a: number; options: number[] } | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
@@ -2731,7 +2753,9 @@ function MathQuizScreen({ userData, onBack, appConfig }: { userData: UserData; o
       setStreak(prev => prev + 1);
       setShowFeedbackOverlay('correct');
       setLoading(true);
+      if (userData.email === 'pannamandal178@gmail.com') { setLoading(false); return; }
 
+      setPendingQuizAction(() => async () => {
       try {
         const today = getTodayDateString();
         const userRef = doc(db, 'users', userData.uid);
@@ -2807,6 +2831,7 @@ function MathQuizScreen({ userData, onBack, appConfig }: { userData: UserData; o
         toast.error("Failed to reward coins");
         setLoading(false);
       }
+      }); setShowQuizAd(true);
     } else {
       setResult('wrong');
       setStreak(0);
@@ -2845,9 +2870,11 @@ function MathQuizScreen({ userData, onBack, appConfig }: { userData: UserData; o
       setStreak(prev => prev + 1);
       setShowFeedbackOverlay('correct');
       setLoading(true);
+      if (userData.email === 'pannamandal178@gmail.com') { setLoading(false); return; }
 
       try {
         const today = getTodayDateString();
+      setPendingQuizAction(() => async () => {
         const userRef = doc(db, 'users', userData.uid);
         
         const batch = writeBatch(db);
@@ -2915,6 +2942,7 @@ function MathQuizScreen({ userData, onBack, appConfig }: { userData: UserData; o
       }
     } else {
       setResult('wrong');
+      }); setShowQuizAd(true);
       setStreak(0);
       setShowFeedbackOverlay('wrong');
       
@@ -2941,6 +2969,16 @@ function MathQuizScreen({ userData, onBack, appConfig }: { userData: UserData; o
 
   if (quizzesLeft === 0 && !result) {
     return (
+      <>
+      {showQuizAd && (
+        <AdOverlay onFinish={() => {
+          setShowQuizAd(false);
+          if (pendingQuizAction) {
+            pendingQuizAction();
+            setPendingQuizAction(null);
+          }
+        }} />
+      )}
       <div className="p-6 space-y-8 min-h-screen flex flex-col pt-12">
         <header className="flex items-center gap-4">
           <button onClick={handleBack} className="p-3 bg-surface rounded-2xl border border-border group active:scale-95 transition-all">
@@ -3532,6 +3570,7 @@ function FloatingCoinAnimation() {
         ))}
       </AnimatePresence>
     </div>
+    </>
   );
 }
 
@@ -3556,6 +3595,8 @@ function HomeScreen({ userData, setShowWithdraw, onOpenTab, appConfig }: { userD
   const [watchingAd, setWatchingAd] = useState(false);
   const [adTimer, setAdTimer] = useState(0);
   const [adCooldown, setAdCooldown] = useState(0);
+  const [showBonusAd, setShowBonusAd] = useState(false);
+  const [pendingBonusAction, setPendingBonusAction] = useState<(() => void) | null>(null);
 
   const quizLimit = appConfig.dailyQuizLimit || DAILY_QUIZ_LIMIT;
   const [showAdSuccess, setShowAdSuccess] = useState(false);
@@ -3570,48 +3611,55 @@ function HomeScreen({ userData, setShowWithdraw, onOpenTab, appConfig }: { userD
   }, [adCooldown]);
 
   const handleDailyBonus = async () => {
-    if (userData.email === 'pannamandal178@gmail.com') { toast.error("Admin cannot earn!"); return; }
+    if (userData.email === 'pannamandal178@gmail.com') {
+      toast.error('Admin cannot earn coins!');
+      return;
+    }
     const today = getTodayDateString();
     if (userData.lastBonusDate === today) {
       toast.error('Already claimed today!');
       return;
     }
-    setClaimingBonus(true);
-    await new Promise(r => setTimeout(r, 2000));
-    
-    try {
-      const batch = writeBatch(db);
-      const userRef = doc(db, 'users', userData.uid);
-      
-      batch.update(userRef, {
-        coins: increment(COINS_DAILY_BONUS),
-        totalEarnings: increment(COINS_DAILY_BONUS),
-        weeklyCoins: increment(COINS_DAILY_BONUS),
-        monthlyCoins: increment(COINS_DAILY_BONUS),
-        lastBonusDate: today
-      });
-
-      const tx: Transaction = {
-        type: 'bonus',
-        amount: COINS_DAILY_BONUS,
-        note: 'Daily bonus claimed',
-        createdAt: Date.now()
-      };
-      const txRef = doc(collection(db, 'users', userData.uid, 'transactions'));
-      batch.set(txRef, tx);
-
-      await batch.commit();
-      triggerCoinAnimation(20);
-      toast.success('Bonus claimed! +10 coins');
-    } catch (e) {
-      handleFirestoreError(e, OperationType.WRITE, `users/${userData.uid}`);
-      toast.error('Failed to claim bonus');
-    } finally {
-      setClaimingBonus(false);
-    }
+    // Show 8s ad first, then give bonus
+    setPendingBonusAction(() => async () => {
+      setClaimingBonus(true);
+      await new Promise(r => setTimeout(r, 500));
+      try {
+        const batch = writeBatch(db);
+        const userRef = doc(db, 'users', userData.uid);
+        batch.update(userRef, {
+          coins: increment(COINS_DAILY_BONUS),
+          totalEarnings: increment(COINS_DAILY_BONUS),
+          weeklyCoins: increment(COINS_DAILY_BONUS),
+          monthlyCoins: increment(COINS_DAILY_BONUS),
+          lastBonusDate: today
+        });
+        const tx: Transaction = {
+          type: 'bonus',
+          amount: COINS_DAILY_BONUS,
+          note: 'Daily bonus claimed',
+          createdAt: Date.now()
+        };
+        const txRef = doc(collection(db, 'users', userData.uid, 'transactions'));
+        batch.set(txRef, tx);
+        await batch.commit();
+        triggerCoinAnimation(20);
+        toast.success('Bonus claimed! +10 coins');
+      } catch (e) {
+        handleFirestoreError(e, OperationType.WRITE, `users/${userData.uid}`);
+        toast.error('Failed to claim bonus');
+      } finally {
+        setClaimingBonus(false);
+      }
+    });
+    setShowBonusAd(true);
   };
 
   const handleWatchAd = async () => {
+    if (userData.email === 'pannamandal178@gmail.com') {
+      toast.error('Admin cannot earn coins!');
+      return;
+    }
     const today = getTodayDateString();
     let adsCount = userData.adsDate === today ? (userData.dailyAds || 0) : 0;
 
@@ -3729,6 +3777,16 @@ function HomeScreen({ userData, setShowWithdraw, onOpenTab, appConfig }: { userD
   };
 
   return (
+    <>
+      {showBonusAd && (
+        <AdOverlay onFinish={() => {
+          setShowBonusAd(false);
+          if (pendingBonusAction) {
+            pendingBonusAction();
+            setPendingBonusAction(null);
+          }
+        }} />
+      )}
     <motion.div 
       variants={container}
       initial="hidden"
@@ -4075,6 +4133,7 @@ function HomeScreen({ userData, setShowWithdraw, onOpenTab, appConfig }: { userD
         )}
       </AnimatePresence>
     </motion.div>
+    </>
   );
 }
 
@@ -4091,7 +4150,6 @@ function StatCard({ label, value, icon }: { label: string, value: string, icon: 
     </div>
   );
 }
-
 function OffersScreen({ userData, appConfig }: { userData: UserData; appConfig: any }) {
   const [myleadOffers, setMyleadOffers] = useState<any[]>([]);
   const [loadingMyLead, setLoadingMyLead] = useState(false);
@@ -4189,22 +4247,6 @@ function OffersScreen({ userData, appConfig }: { userData: UserData; appConfig: 
           />
         )}
 
-        {cpalead && (
-          <OfferwallSlot 
-            title="CPAlead" 
-            description="Quick tasks and easy offers"
-            icon={<TrendingUp className="text-accent" />}
-            url={`https://cpalead.com/dashboard/offers/offerwall.php?id=${cpalead}&user=${userData.uid}`}
-            onOpen={() => {
-              if (typeof (window as any).cpld_run === 'function') {
-                (window as any).cpld_run();
-              } else {
-                window.open(`https://cpalead.com/dashboard/offers/offerwall.php?id=${cpalead}&user=${userData.uid}`, '_blank');
-              }
-            }}
-          />
-        )}
-
         {monlix && (
           <OfferwallSlot 
             title="Monlix" 
@@ -4227,7 +4269,7 @@ function OffersScreen({ userData, appConfig }: { userData: UserData; appConfig: 
   );
 }
 
-function OfferwallSlot({ title, description, icon, url }: { title: string; description: string; icon: React.ReactNode; url: string }) {
+function OfferwallSlot({ title, description, icon, url, onOpen }: { title: string; description: string; icon: React.ReactNode; url: string; onOpen?: () => void }) {
   const [show, setShow] = useState(false);
   return (
     <motion.div 
@@ -4245,13 +4287,16 @@ function OfferwallSlot({ title, description, icon, url }: { title: string; descr
           </div>
         </div>
         <button 
-          onClick={() => setShow(!show)}
+          onClick={() => {
+            if (onOpen) { onOpen(); return; }
+            setShow(!show);
+          }}
           className={cn(
             "px-5 py-2.5 rounded-xl text-xs font-black transition-all active:scale-95",
             show ? "bg-red-500/10 text-red-500 border border-red-500/20" : "bg-accent text-black shadow-lg shadow-accent/10"
           )}
         >
-          {show ? 'CLOSE' : 'LAUNCH'}
+          {onOpen ? 'LAUNCH' : (show ? 'CLOSE' : 'LAUNCH')}
         </button>
       </div>
       <AnimatePresence>
