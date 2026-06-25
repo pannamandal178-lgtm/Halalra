@@ -2520,29 +2520,20 @@ function AdOverlay({ onFinish }: { onFinish: () => void }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
-      background: '#000',
+      background: 'rgba(0,0,0,0.95)',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      gap: '16px', padding: '20px'
+      gap: '20px', padding: '20px'
     }}>
-      {/* Timer top right */}
-      <div style={{ position: 'absolute', top: 16, right: 16,
-        width: 50, height: 50, borderRadius: '50%',
+      <p style={{ color: '#aaa', fontSize: 14 }}>🎁 Your reward is loading...</p>
+      <div style={{
+        width: 80, height: 80, borderRadius: '50%',
         background: 'linear-gradient(135deg, #00ff88, #00cc66)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 20, fontWeight: 'bold', color: '#000'
+        fontSize: 32, fontWeight: 'bold', color: '#000',
+        boxShadow: '0 0 30px rgba(0,255,136,0.4)'
       }}>{timeLeft}</div>
-
-      <p style={{ color: '#aaa', fontSize: 12, marginBottom: 8 }}>Your reward is loading...</p>
-
-      {/* Ad iframe */}
-      <iframe
-        src={`https://pannamandal178-lgtm.github.io/Halalra/ad.html?t=${Date.now()}`}
-        style={{ width: 320, height: 250, border: 'none', borderRadius: 12, background: '#111' }}
-        sandbox="allow-scripts allow-same-origin allow-popups"
-      />
-
-      <p style={{ color: '#555', fontSize: 10 }}>Closing in {timeLeft}s</p>
+      <p style={{ color: '#666', fontSize: 12 }}>Please wait {timeLeft} seconds...</p>
     </div>
   );
 }
