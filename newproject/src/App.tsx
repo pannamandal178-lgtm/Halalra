@@ -2510,7 +2510,6 @@ function CooldownCircle({ remaining, total }: { remaining: number; total: number
 
 function AdOverlay({ onFinish }: { onFinish: () => void }) {
   const [timeLeft, setTimeLeft] = useState(8);
-  const clicked = useRef(false);
 
   useEffect(() => {
     if (timeLeft <= 0) { onFinish(); return; }
@@ -2518,25 +2517,14 @@ function AdOverlay({ onFinish }: { onFinish: () => void }) {
     return () => clearTimeout(t);
   }, [timeLeft, onFinish]);
 
-  const handleClick = () => {
-    if (!clicked.current) {
-      clicked.current = true;
-      window.open('https://www.effectivecpmnetwork.com/z47ghvh51?key=f1e74d11de9709b30c8a289f4f16e8c5', '_blank');
-    }
-  };
-
   return (
-    <div
-      onClick={handleClick}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
-        background: 'rgba(0,0,0,0.96)',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        gap: '20px', padding: '20px',
-        cursor: 'pointer'
-      }}
-    >
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: 'rgba(0,0,0,0.96)',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      gap: '20px', padding: '20px'
+    }}>
       <p style={{ color: '#aaa', fontSize: 14 }}>🎁 Your reward is being prepared...</p>
 
       <div style={{
@@ -2547,8 +2535,28 @@ function AdOverlay({ onFinish }: { onFinish: () => void }) {
         boxShadow: '0 0 40px rgba(0,255,136,0.5)'
       }}>{timeLeft}</div>
 
-      <p style={{ color: '#666', fontSize: 12 }}>Closing automatically in {timeLeft}s</p>
-      <p style={{ color: '#444', fontSize: 10 }}>Tap anywhere to continue</p>
+      {/* Direct anchor tag — browser won't block this */}
+      <a
+        href="https://www.effectivecpmnetwork.com/z47ghvh51?key=f1e74d11de9709b30c8a289f4f16e8c5"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'block',
+          width: '280px',
+          padding: '14px',
+          background: 'linear-gradient(135deg, #00ff88, #00cc66)',
+          color: '#000',
+          fontWeight: 'bold',
+          fontSize: 15,
+          textAlign: 'center',
+          borderRadius: 12,
+          textDecoration: 'none'
+        }}
+      >
+        🎯 Tap here to load your reward
+      </a>
+
+      <p style={{ color: '#555', fontSize: 11 }}>Closing in {timeLeft}s</p>
     </div>
   );
 }
