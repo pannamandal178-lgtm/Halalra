@@ -1,44 +1,29 @@
-name: Deploy Website
+name: Build and Deploy
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+      - uses: actions/checkout@v3
 
       - name: Extract zip
-        run: |
-          mkdir -p extracted
-          unzip -o halallearn_fixed.zip -d extracted
-          echo "Checking directory structure:"
-          ls -R extracted
+        run: unzip -o halallearn_fixed.zip -d extracted
 
-      - name: Install and Build
-        run: |
-          # সঠিক প্রজেক্ট ফোল্ডারটি খুঁজে বের করা যেখানে package.json আছে
-          TARGET_DIR=$(find extracted -name "package.json" -exec dirname {} \;)
-          echo "Found project folder at: $TARGET_DIR"
-          cd "$TARGET_DIR"
-          npm install
-          npm run build
+      - name: Install dependencies
+        run: cd extracted && npm install
+
+      - name: Build
+        run: cd extracted && npm run build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: extracted/**/dist
+          publish_dir: extracted/dist
