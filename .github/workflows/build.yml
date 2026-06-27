@@ -1,34 +1,14 @@
-name: Build and Deploy
+- name: Extract zip
+  run: unzip -o halallearn_fixed.zip -d extracted
 
-on:
-  push:
-    branches: [main]
+- name: Install dependencies
+  run: cd extracted && npm install
 
-permissions:
-  contents: write
+- name: Build
+  run: cd extracted && npm run build
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Extract zip
-        run: |
-          unzip -o halallearn_fixed.zip -d extracted
-          ls extracted/
-
-      - name: Find and copy project files
-        run: |
-          PROJECT_DIR=$(find extracted -name "package.json" -not -path "*/node_modules/*" | head -1 | xargs dirname)
-          echo "Project found at: $PROJECT_DIR"
-          cp -r $PROJECT_DIR/. newproject/
-          ls newproject/
-
-      - name: Commit extracted files
-        run: |
-          git config user.email "action@github.com"
-          git config user.name "GitHub Action"
-          git add newproject/
-          git commit -m "Extract project files" || echo "Nothing to commit"
-          git push
+- name: Deploy to GitHub Pages
+  uses: peaceiris/actions-gh-pages@v3
+  with:
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+    publish_dir: extracted/dist
