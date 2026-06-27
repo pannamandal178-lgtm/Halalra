@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-size: 18
+          node-version: 18
 
       - name: Extract zip
         run: unzip -o halallearn_fixed.zip -d extracted
