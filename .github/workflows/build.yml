@@ -1,14 +1,14 @@
 - name: Extract zip
-  run: unzip -o halallearn_fixed.zip -d extracted
+      run: unzip -o halallearn_fixed.zip -d extracted
 
-- name: Install dependencies
-  run: cd extracted && npm install
+    - name: Install dependencies
+      run: cd extracted/fresh_project/project && npm install
 
-- name: Build
-  run: cd extracted && npm run build
+    - name: Build
+      run: cd extracted/fresh_project/project && npm run build
 
-- name: Deploy to GitHub Pages
-  uses: peaceiris/actions-gh-pages@v3
-  with:
-    github_token: ${{ secrets.GITHUB_TOKEN }}
-    publish_dir: extracted/dist
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: extracted/fresh_project/project/dist
