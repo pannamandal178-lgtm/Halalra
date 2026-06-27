@@ -1,27 +1,14 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HalaLearn</title>
-    <meta name="45107cdf73d2db7123bac2e45cef41c115eab760" content="45107cdf73d2db7123bac2e45cef41c115eab760" />
-    <meta name="clckd" content="47f144f4bb1bd958086adef46a3160af" />
-    <script type="text/javascript">
-      (function(l) {
-        if (l.search[1] === '/' ) {
-          var decoded = l.search.slice(1).split('&').map(function(s) { 
-            return s.replace(/~and~/g, '&')
-          }).join('?');
-          window.history.replaceState(null, null,
-            l.pathname.slice(0, -1) + decoded + l.hash
-          );
-        }
-      }(window.location))
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-    <script>(function(s){s.dataset.zone='11191032',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-  </body>
-</html>
+- name: Extract zip
+  run: unzip -o halallearn_fixed.zip -d extracted
+
+- name: Install dependencies
+  run: cd extracted && npm install
+
+- name: Build
+  run: cd extracted && npm run build
+
+- name: Deploy to GitHub Pages
+  uses: peaceiris/actions-gh-pages@v3
+  with:
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+    publish_dir: extracted/dist
