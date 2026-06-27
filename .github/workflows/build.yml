@@ -1,14 +1,37 @@
-- name: Extract zip
-      run: unzip -o halallearn_fixed.zip -d extracted
+name: Deploy Website
 
-    - name: Install dependencies
-      run: cd extracted/fresh_project/project && npm install
+on:
+  push:
+    branches:
+      - main
 
-    - name: Build
-      run: cd extracted/fresh_project/project && npm run build
+permissions:
+  contents: write
 
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: extracted/fresh_project/project/dist
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-size: 18
+
+      - name: Extract zip
+        run: unzip -o halallearn_fixed.zip -d extracted
+
+      - name: Install dependencies
+        run: cd extracted/fresh_project/project && npm install
+
+      - name: Build
+        run: cd extracted/fresh_project/project && npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: extracted/fresh_project/project/dist
